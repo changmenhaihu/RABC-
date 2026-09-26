@@ -6,25 +6,13 @@ import com.example.rabc.service.UserService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
-
 @RestController
-
 public class UserController {
     @Resource
     private UserService userService;
-    @PostMapping("/login")
-    public String login (@RequestBody Map<String,String> body){
-        String username = body.get("username");
-        String password = body.get("password");
-        String token = userService.login(username,password);
-        if (token==null){return  "登录失败";
-    }
-        return  token;
+public UserController(UserService userService){
+    this.userService = userService;
 }
-
-
 @GetMapping("/me")
 public String me(@RequestHeader("Authorization") String authorization) {
     if (authorization == null) {

@@ -22,7 +22,7 @@ public class UserServiceImpl implements UserService {
         wrapper.eq(User::getUsername,username);
         User user = userMapper.selectOne(wrapper);
         //校验账号不存在或者密码不匹配
-        if(user == null || user.getPassword().equals(password)){
+        if(user == null || !user.getPassword().equals(password)){
             return  null;
         }
         String token = UUID.randomUUID().toString();
