@@ -1,5 +1,6 @@
 package com.example.rabc.Controller;
 
+import com.example.rabc.common.result;
 import com.example.rabc.dto.Logindto;
 import com.example.rabc.service.UserService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,12 +15,12 @@ public class LoginController {
         this.userService = userService;
     }
     @PostMapping("/login")
-    public String login(@RequestBody Logindto logindto){
+    public result<String> login(@RequestBody Logindto logindto){
         String token = userService.login(logindto.getUsername(),
                 logindto.getPassword());
         if(token == null){
-            return "登录失败";
+            return result.fail("token不存在");
         }
-        return "登录成功："+token;
+        return result.sucess(token);
     }
 }
