@@ -1,6 +1,7 @@
 package com.example.rabc.Controller;
 
 
+import com.example.rabc.common.result;
 import com.example.rabc.entity.User;
 import com.example.rabc.service.UserService;
 import jakarta.annotation.Resource;
@@ -10,13 +11,15 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     @Resource
     private UserService userService;
+
 public UserController(UserService userService){
     this.userService = userService;
 }
+
 @GetMapping("/me")
-public String me(@RequestHeader("Authorization") String authorization) {
+public result<Long> me(@RequestHeader("Authorization") String authorization) {
     if (authorization == null) {
-        return "未登录";
+        return result.fail("未登录");
     }
     String token;
     if (authorization.startsWith("Bearer")) {
@@ -26,13 +29,13 @@ public String me(@RequestHeader("Authorization") String authorization) {
     }
     Long userId = userService.getUserIdByToken(token);
     if (userId == null) {
-        return "未登录";
+        return result.fail("未登录");
     }
     User user = userService.getUserById(userId);
     if (user == null) {
-        return "用户不存在";
+        return result.fail("用户不存在");
     }
-    return "你是用户id=" + userId;
+    return result.sucess(userId);
 }
 }
 

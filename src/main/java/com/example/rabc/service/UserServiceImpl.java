@@ -35,7 +35,7 @@ public class UserServiceImpl implements UserService {
         return  TOKEN_MAP.get(token);
     }
 
-
+    @Override
     public boolean checkToken(String token) {
         return TOKEN_MAP.containsKey(token);
     }

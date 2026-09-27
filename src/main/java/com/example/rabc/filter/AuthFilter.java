@@ -30,7 +30,7 @@ public class AuthFilter implements Filter{
           return;
       }
        //设置返回内容的编码 避免中文乱码
-       resp.setContentType("test/plain;charse=utf-8");
+       resp.setContentType("application/json;charse=utf-8");
        //拿到请求地址 如果是login 那么直接放行
        String uri = req.getRequestURI();
        if("/login".equals(uri)){
@@ -40,7 +40,7 @@ public class AuthFilter implements Filter{
        //读取请求头里的Authorization
        String authorization = req.getHeader("Authorization");
        if(authorization == null || authorization.isBlank()){
-           resp.getWriter().write("未登录，需先获取token");
+           resp.getWriter().write("{\"code\":401,\"msg\":\"未登录，请先获取token\",\"data\":null}");
            return;
        }
        //处理Bearer前缀
@@ -50,9 +50,9 @@ public class AuthFilter implements Filter{
        }else {
            token = authorization;
        }
-       boolean vaild = UserService.checkToken(token);
-       if(!vaild){
-           resp.getWriter().write("token无效，请重新登录");
+       boolean valid = userService.checkToken(token);
+       if(!valid){
+           resp.getWriter().write("{\"code\":401,\"msg\":\"token无效，请重新登录\",\"data\":null}");
            return;
        }
        //上面的校验通过请求继续往后走

@@ -10,9 +10,7 @@ public interface UserService {
     Long getUserIdByToken(String token);
 
     //校验token是否有效
-    static boolean checkToken(String token) {
-        return false;
-    }
+     boolean checkToken(String token) ;
 
     //根据用户id查询用户
     User getUserById(Long userId);
