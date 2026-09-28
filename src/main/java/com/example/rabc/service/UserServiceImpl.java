@@ -21,7 +21,7 @@ public class UserServiceImpl implements UserService {
     @Resource
     private RedisTemplate<String,Object> redisTemplate;
     //Redis前缀
-    private  static  final String TOKEN_PREFIX = "token：";
+    private  static  final String TOKEN_PREFIX = "token:";
     //token 过期时间 2小时
     private  static  final  long TOKEN_EXPIRE_SECONDS = 2*60*60;
 
