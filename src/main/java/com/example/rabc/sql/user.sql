@@ -8,3 +8,8 @@ CREATE TABLE `user` (
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 INSERT INTO `user` (`username`, `password`) VALUES ('admin', '123456');
+ALTER TABLE `user` ADD COLUMN nickname VARCHAR(50) NULL COMMENT "用户昵称";
+
+UPDATE user SET password='123456' WHERE username='admin';
+
+

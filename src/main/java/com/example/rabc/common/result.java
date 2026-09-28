@@ -9,10 +9,10 @@ public class result<T> {
     private  T data;
 
     //成功静态方法
-    public static  <T> result<T> sucess(T data){
+    public static  <T> result<T> success(T data){
      result<T> r = new result<>();
      r.code = 200;
-     r.msg = "sucess";
+     r.msg = "success";
      r.data = data;
      return r;
     }
@@ -21,7 +21,7 @@ public class result<T> {
     public static  <T> result<T> fail(String msg){
         result<T> r = new result<>();
         r.code = 400;
-        r.msg = "msg";
+        r.msg = (msg);
         r.data = null;
         return r;
     }

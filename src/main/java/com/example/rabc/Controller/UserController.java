@@ -12,10 +12,6 @@ public class UserController {
     @Resource
     private UserService userService;
 
-public UserController(UserService userService){
-    this.userService = userService;
-}
-
 @GetMapping("/me")
 public result<Long> me(@RequestHeader("Authorization") String authorization) {
     if (authorization == null) {
@@ -35,7 +31,7 @@ public result<Long> me(@RequestHeader("Authorization") String authorization) {
     if (user == null) {
         return result.fail("用户不存在");
     }
-    return result.sucess(userId);
+    return result.success(userId);
 }
 }
 

@@ -4,15 +4,21 @@ import com.example.rabc.service.UserService;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class AuthFilter implements Filter{
    //过滤器初始化
    public final UserService userService;
+   private final RedisTemplate<String,Object> redisTemplate;
+   private static  final  String TOKEN_PREFIX= "token";
+   private static final long TOKEN_EXPIRE_SECONDS = 2*60*60;
    public AuthFilter(UserService userService){
+       this.redisTemplate = new RedisTemplate<>();
        this.userService = userService;
    }
    @Override
@@ -55,7 +61,11 @@ public class AuthFilter implements Filter{
            resp.getWriter().write("{\"code\":401,\"msg\":\"token无效，请重新登录\",\"data\":null}");
            return;
        }
+       //token 续期 每次合法访问就刷新过期时间
+       String redisKey = TOKEN_PREFIX + token;
+       redisTemplate.expire(redisKey,TOKEN_EXPIRE_SECONDS, TimeUnit.SECONDS);
        //上面的校验通过请求继续往后走
        chain.doFilter(request,response);
+
    }
 }
