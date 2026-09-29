@@ -10,5 +10,7 @@ import lombok.Data;
 public class Permission {
     @TableId(type = IdType.AUTO)
     private Long id;
-    private String perm_key;
+    private String permKey;
+
+
 }

@@ -3,6 +3,8 @@ package com.example.rabc.service;
 
 import com.example.rabc.entity.User;
 
+import java.util.List;
+
 public interface UserService {
     //登录业务，校验账号和密码，生成token
     String login (String username,String password);
@@ -19,4 +21,6 @@ public interface UserService {
     Long getUserIdByToken (String token);
     //新增用户
     void addUser(User user);
+
+    List<String> getPermListByToken(String token);
 }
