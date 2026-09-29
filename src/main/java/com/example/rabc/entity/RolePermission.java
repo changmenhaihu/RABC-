@@ -10,6 +10,7 @@ import lombok.Data;
 public class RolePermission {
     @TableId(type = IdType.AUTO)
     private Long id;
-    private  Long  user_id;
-    private  Long perm_id;
+    private  Long  roleId;
+    private  Long permId;
+
 }
