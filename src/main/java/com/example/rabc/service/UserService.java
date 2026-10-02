@@ -2,6 +2,7 @@ package com.example.rabc.service;
 
 
 import com.example.rabc.entity.User;
+import com.example.rabc.vo.UserVO;
 
 import java.util.List;
 
@@ -13,7 +14,7 @@ public interface UserService {
      boolean checkToken(String token) ;
 
     //根据用户id查询用户
-    User getUserById(Long userId);
+    UserVO getUserById(Long userId);
 
     //退出登录 删除Redis中的token
     void logout(String token);

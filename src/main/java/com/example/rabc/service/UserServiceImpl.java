@@ -2,14 +2,12 @@ package com.example.rabc.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.rabc.dto.TokenData;
-import com.example.rabc.entity.Permission;
-import com.example.rabc.entity.RolePermission;
 import com.example.rabc.entity.User;
-import com.example.rabc.entity.UserRole;
 import com.example.rabc.mapper.PermissionMapper;
 import com.example.rabc.mapper.RolePermissionMapper;
 import com.example.rabc.mapper.UserMapper;
 import com.example.rabc.mapper.UserRoleMapper;
+import com.example.rabc.vo.UserVO;
 import jakarta.annotation.Resource;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -19,8 +17,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -32,6 +28,10 @@ public class UserServiceImpl implements UserService {
     private RolePermissionMapper rolePermissionMapper;
     @Resource
     private PermissionMapper permissionMapper;
+
+    //把权限缓存到Redis
+    private static final String PERM_PREFIX = "perm:user:";
+    private static final long PERM_EXPIRE_SECONDS =30*60;
 
     @Resource
     private RedisTemplate<String,Object> redisTemplate;
@@ -54,28 +54,9 @@ public class UserServiceImpl implements UserService {
         if(!passwordOk){
             return  null;
         }
-        // 1. 查用户所有角色ID
-        List<Long> roleIdList = userRoleMapper.selectList(
-                new LambdaQueryWrapper<UserRole>().eq(UserRole::getUserId, user.getId())
-        ).stream().map(UserRole::getRoleId).collect(Collectors.toList());
-
-// 2. 查角色对应权限ID
-        List<Long> permIdList = roleIdList.isEmpty()
-                ? Collections.emptyList()
-                : rolePermissionMapper.selectList(
-                new LambdaQueryWrapper<RolePermission>().in(RolePermission::getRoleId, roleIdList)
-        ).stream().map(RolePermission::getPermId).collect(Collectors.toList());
-
-// 3. 查权限标识 permKey
-        List<String> permList = permIdList.isEmpty()
-                ? Collections.emptyList()
-                : permissionMapper.selectByIds(permIdList)
-                .stream()
-                .map(Permission::getPermKey)
-                .distinct()
-                .collect(Collectors.toList());
-
-// 4. 存进 TokenData
+   //一次SQL 直接查询权限标识
+        List<String> permList = getPermKeysByUserId(user.getId());
+// 存进 TokenData
         TokenData tokenData = new TokenData();
         tokenData.setPermList(permList);
         String token = UUID.randomUUID().toString().replace("-","");
@@ -109,12 +90,26 @@ public  Long getUserIdByToken(String token){
     @Override
     public  boolean checkToken(String token){
         String redisKey = TOKEN_PREFIX + token;
-        return redisTemplate.hasKey(redisKey);
+       Boolean hasKey =  redisTemplate.hasKey(redisKey);
+       if (!hasKey){
+           return false;
+       }
+       //每次校验通过都重新设置为2小时  滑动过期 只要使用就一直重置
+        redisTemplate.expire(redisKey,TOKEN_EXPIRE_SECONDS,TimeUnit.SECONDS);
+       return true;
     }
 
     @Override
-    public User getUserById(Long userId) {
-    return userMapper.selectById(userId);
+    public UserVO getUserById(Long userId) {
+    User user = userMapper.selectById(userId);
+    if (user==null){
+        return null;
+    }
+    UserVO vo =new UserVO();
+    vo.setId(user.getId());
+    vo.setUsername(user.getUsername());
+    vo.setNickname(user.getNickname());
+        return vo;
         }
 
     @Override
@@ -130,5 +125,23 @@ public  Long getUserIdByToken(String token){
          return Collections.emptyList();
      }
      return tokenData.getPermList();
+    }
+
+    //  权限缓存到列表里的方法
+    @SuppressWarnings("unckecked")
+    private List<String> getPermKeysByUserId(Long userId){
+        String permKey = PERM_PREFIX + userId;
+        Object cache = redisTemplate.opsForValue().get(permKey);
+        if(cache!=null){
+            return (List<String>) cache;
+        }
+        List<String> perms = userMapper.selectPermKeyByUserId(userId);
+        redisTemplate.opsForValue().set(
+                permKey,
+                perms,
+                PERM_EXPIRE_SECONDS,
+                TimeUnit.SECONDS
+        );
+        return perms;
     }
 }
