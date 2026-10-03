@@ -1,4 +1,4 @@
-package com.example.rabc.service;
+package com.example.rabc.service.serviceimpl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.rabc.dto.TokenData;
@@ -7,6 +7,7 @@ import com.example.rabc.mapper.PermissionMapper;
 import com.example.rabc.mapper.RolePermissionMapper;
 import com.example.rabc.mapper.UserMapper;
 import com.example.rabc.mapper.UserRoleMapper;
+import com.example.rabc.service.UserService;
 import com.example.rabc.vo.UserVO;
 import jakarta.annotation.Resource;
 import org.mindrot.jbcrypt.BCrypt;
