@@ -29,8 +29,8 @@ public class rbacController {
     }
     //给用户分配角色
     //请求示例   {"userId":1,"roleIds":[1,3]}
-    @PostMapping("/role/assignPerms")
-    public result<Void> assignPerms(@RequestBody AssignRolesDTO dto){
+    @PostMapping("/user/assignRoles")
+    public result<Void> assignRoles(@RequestBody AssignRolesDTO dto){
         userRoleService.assignRoles(dto.getUserId(),dto.getRoleIds());
         return result.success(null);
     }
