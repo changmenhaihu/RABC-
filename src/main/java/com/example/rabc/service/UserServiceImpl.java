@@ -128,7 +128,7 @@ public  Long getUserIdByToken(String token){
     }
 
     //  权限缓存到列表里的方法
-    @SuppressWarnings("unckecked")
+    @SuppressWarnings("unchecked")
     private List<String> getPermKeysByUserId(Long userId){
         String permKey = PERM_PREFIX + userId;
         Object cache = redisTemplate.opsForValue().get(permKey);
