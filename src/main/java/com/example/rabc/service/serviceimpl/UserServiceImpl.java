@@ -1,6 +1,7 @@
 package com.example.rabc.service.serviceimpl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.example.rabc.common.BusinessException;
 import com.example.rabc.dto.TokenData;
 import com.example.rabc.entity.User;
 import com.example.rabc.mapper.PermissionMapper;
@@ -48,12 +49,12 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.selectOne(wrapper);
         //校验账号不存在或者密码不匹配
         if(user == null ){
-            return  null;
+            throw new BusinessException("账号或者密码错误");
         }
 
         boolean passwordOk = BCrypt.checkpw(password,user.getPassword());
         if(!passwordOk){
-            return  null;
+            throw new BusinessException("账号或者密码错误");
         }
    //一次SQL 直接查询权限标识
         List<String> permList = getPermKeysByUserId(user.getId());

@@ -44,6 +44,8 @@ public class AuthFilter implements Filter{
        //读取请求头里的Authorization
        String authorization = req.getHeader("Authorization");
        if(authorization == null || authorization.isBlank()){
+           ((HttpServletResponse) response).setStatus(401);
+           response.setContentType("application/json;charset = utf-8");
            resp.getWriter().write("{\"code\":401,\"msg\":\"未登录，请先获取token\",\"data\":null}");
            return;
        }
