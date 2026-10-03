@@ -1,6 +1,7 @@
 package com.example.rabc.Controller;
 
 
+import com.example.rabc.annotation.RequirePerm;
 import com.example.rabc.common.result;
 import com.example.rabc.entity.User;
 import com.example.rabc.service.UserService;
@@ -14,7 +15,7 @@ public class UserController {
     private UserService userService;
 
 @GetMapping("/me")
-public result<Long> me(@RequestHeader("Authorization") String authorization) {
+public result<UserVO> me(@RequestHeader("Authorization") String authorization) {
     if (authorization == null) {
         return result.fail("未登录");
     }
@@ -32,7 +33,13 @@ public result<Long> me(@RequestHeader("Authorization") String authorization) {
     if (user == null) {
         return result.fail("用户不存在");
     }
-    return result.success(userId);
+    return result.success(user);
+}
+    @RequirePerm("user:add")
+    @PostMapping("user/add")
+    public result<User> addUser(@RequestBody User user){
+    userService.addUser(user);
+    return result.success(null);
 }
 }
 
