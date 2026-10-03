@@ -2,6 +2,7 @@ package com.example.rabc.Controller;
 
 
 import com.example.rabc.annotation.RequirePerm;
+import com.example.rabc.common.BusinessException;
 import com.example.rabc.common.result;
 import com.example.rabc.entity.User;
 import com.example.rabc.service.UserService;
@@ -16,22 +17,19 @@ public class UserController {
 
 @GetMapping("/me")
 public result<UserVO> me(@RequestHeader("Authorization") String authorization) {
-    if (authorization == null) {
-        return result.fail("未登录");
+    if (authorization == null || authorization.isBlank()) {
+        throw new BusinessException("未登录");
     }
-    String token;
-    if (authorization.startsWith("Bearer")) {
-        token = authorization.substring(7);
-    } else {
-        token = authorization;
-    }
+    String token = authorization.startsWith("Bearer ")?
+            authorization.substring(7):authorization;
+
     Long userId = userService.getUserIdByToken(token);
     if (userId == null) {
-        return result.fail("未登录");
+        throw new BusinessException("登录已过期 请重新登录");
     }
     UserVO user = userService.getUserById(userId);
     if (user == null) {
-        return result.fail("用户不存在");
+        throw new BusinessException("用户不存在");
     }
     return result.success(user);
 }

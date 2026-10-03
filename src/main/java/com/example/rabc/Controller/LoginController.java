@@ -20,9 +20,6 @@ public class LoginController {
     public result<String> login(@RequestBody Logindto logindto){
         String token = userService.login(logindto.getUsername(),
                 logindto.getPassword());
-        if(token == null){
-            return result.fail("账号或者密码错误");
-        }
         return result.success(token);
     }
     @PostMapping("/logout")
