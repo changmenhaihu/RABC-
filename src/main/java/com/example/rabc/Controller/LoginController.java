@@ -1,5 +1,6 @@
 package com.example.rabc.Controller;
 
+import com.example.rabc.common.BusinessException;
 import com.example.rabc.common.result;
 import com.example.rabc.dto.Logindto;
 import com.example.rabc.service.UserService;
@@ -27,14 +28,14 @@ public class LoginController {
         String authorization = request.getHeader("Authorization");
         String token;
         if(authorization == null) {
-            return result.fail("未携带Authorization请求头");
+           throw new BusinessException("未携带Authorization请求头");
         }
         if(authorization.startsWith("Bearer ")){
             token = authorization.substring(7);
         }else {
             token = authorization;
-        }
+        } //可以优化为三元运算符 ?
         userService.logout(token);
-        return  result.success("退出成功");
+        throw new BusinessException("退出成功");
     }
 }

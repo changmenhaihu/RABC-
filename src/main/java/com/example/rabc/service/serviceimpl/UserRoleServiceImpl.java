@@ -2,6 +2,7 @@ package com.example.rabc.service.serviceimpl;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.example.rabc.common.BusinessException;
 import com.example.rabc.entity.UserRole;
 import com.example.rabc.mapper.UserRoleMapper;
 import com.example.rabc.service.UserRoleService;
@@ -22,18 +23,23 @@ public class UserRoleServiceImpl implements UserRoleService {
     //加上事务 删除和查找必须同时成功或失败
     @Transactional(rollbackFor = Exception.class)
     public void assignRoles(Long userId, List<Long> roleIds){
+        if (userId == null){
+            throw new BusinessException("userId 不能为空");
+        }
+        if (roleIds == null){
+            throw new BusinessException("roleIds 不能为空");}
         //删除用户原有角色
-        useerRoleMapper.delete(new LambdaQueryWrapper<UserRole>().eq(UserRole::getId,userId));
+        useerRoleMapper.delete(
+                new LambdaQueryWrapper<UserRole>().eq(UserRole::getId,userId));
         //批量插入新角色
-        if (roleIds != null &&!roleIds.isEmpty()){
             for (Long roleId :roleIds){
                 UserRole userRole = new UserRole();
                 userRole.setUserId(userId);
                 userRole.setRoleId(roleId);
                 useerRoleMapper.insert(userRole);
             }
-        }
         //删除用户的权限缓存
         redisTemplate.delete("perm:user:"+userId);
     }
-}
+    }
+
