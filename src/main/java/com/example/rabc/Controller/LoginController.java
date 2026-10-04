@@ -36,6 +36,6 @@ public class LoginController {
             token = authorization;
         } //可以优化为三元运算符 ?
         userService.logout(token);
-        throw new BusinessException("退出成功");
+       return result.success("退出成功");
     }
 }
