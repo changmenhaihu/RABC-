@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.List;
 //import java.util.concurrent.TimeUnit;
 
 @Component
@@ -19,6 +20,9 @@ public class AuthFilter implements Filter{
    public AuthFilter(UserService userService){
        this.userService = userService;
    }
+
+   public static final String REQUEST_ATTR_PERM_LIST = "permList";
+   public static final String REQUEST_ATTR_USER_ID = "userId";
    @Override
     public void doFilter(ServletRequest request,ServletResponse response,
                          FilterChain chain) throws ServletException, IOException {
@@ -34,7 +38,7 @@ public class AuthFilter implements Filter{
           return;
       }
        //设置返回内容的编码 避免中文乱码
-       resp.setContentType("application/json;charse=utf-8");
+       resp.setContentType("application/json;charset=utf-8");
        //拿到请求地址 如果是login 那么直接放行
        String uri = req.getRequestURI();
        if("/login".equals(uri)){
@@ -51,7 +55,7 @@ public class AuthFilter implements Filter{
        }
        //处理Bearer前缀
        String token;
-       if(authorization.startsWith("Bearer")){
+       if(authorization.startsWith("Bearer ")){
            token = authorization.substring(7);
        }else {
            token = authorization;
@@ -65,6 +69,12 @@ public class AuthFilter implements Filter{
      //  String redisKey = TOKEN_PREFIX + token;
       // redisTemplate.expire(redisKey,TOKEN_EXPIRE_SECONDS, TimeUnit.SECONDS);
        //上面的校验通过请求继续往后走
+       //对重复查询的优化 一次查询的权限列表  存入request域  拦截器直接读取
+       List<String> permList = userService.getPermListByToken(token);
+       //Controller层也可以从这里取其他 信息 ，额外存入userId
+       Long userId = userService.getUserIdByToken(token);
+       req.setAttribute(REQUEST_ATTR_PERM_LIST,permList);
+       req.setAttribute(REQUEST_ATTR_USER_ID,userId);
        chain.doFilter(request,response);
 
    }
