@@ -3,7 +3,9 @@ package com.example.rabc.service.serviceimpl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.rabc.common.BusinessException;
 import com.example.rabc.dto.TokenData;
+import com.example.rabc.dto.UpdateUserDTO;
 import com.example.rabc.entity.User;
+import com.example.rabc.entity.UserRole;
 import com.example.rabc.mapper.PermissionMapper;
 import com.example.rabc.mapper.RolePermissionMapper;
 import com.example.rabc.mapper.UserMapper;
@@ -14,11 +16,13 @@ import jakarta.annotation.Resource;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -145,5 +149,54 @@ public  Long getUserIdByToken(String token){
                 TimeUnit.SECONDS
         );
         return perms;
+    }
+    @Override
+    public List<UserVO> listAll(){
+        List<User> users = userMapper.selectList(null);
+        return  users.stream().map(user -> {
+            UserVO vo=new UserVO();
+            vo.setId(user.getId());
+            vo.setUsername(user.getUsername());
+            vo.setNickname(user.getNickname());
+            return vo;
+        }).collect(Collectors.toList());
+    }
+
+    public void updateUser(UpdateUserDTO dto){
+        if (dto.getId()==null){
+            throw new BusinessException("userId 不能为空");
+        }
+        User user = userMapper.selectById(dto.getId());
+        if (user==null){
+            throw new BusinessException("用户不存在");
+        }
+        //只更新呢称
+        user.setNickname(dto.getNickname());
+        userMapper.updateById(user);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteUser(Long userId){
+        if (userId == null){
+            throw new BusinessException("userId 不能为空");
+        }
+        //先删除user_role 关联
+        userRoleMapper.delete(
+                new LambdaQueryWrapper<UserRole>().eq(UserRole::getId,userId)
+        );
+        //再删除用户
+        userMapper.deleteById(userId);
+        //清理Redis缓存
+        redisTemplate.delete("perm:user"+userId);
+    }
+    @Override
+    public  List<Long> getRoleIdsByUserId(Long userId){
+        if (userId == null){
+            throw new BusinessException("userId不能为空");
+        }
+        return userRoleMapper.selectList(
+                new LambdaQueryWrapper<UserRole>().eq(UserRole::getId,userId)
+        ).stream().map(UserRole::getId).collect(Collectors.toList());
     }
 }

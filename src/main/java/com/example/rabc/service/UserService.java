@@ -1,6 +1,7 @@
 package com.example.rabc.service;
 
 
+import com.example.rabc.dto.UpdateUserDTO;
 import com.example.rabc.entity.User;
 import com.example.rabc.vo.UserVO;
 
@@ -22,6 +23,14 @@ public interface UserService {
     Long getUserIdByToken (String token);
     //新增用户
     void addUser(User user);
-
+    // 根据token查询权限列表
     List<String> getPermListByToken(String token);
+    //查询所有的用户
+    List<UserVO> listAll();
+    //修改用户信息
+    void updateUser(UpdateUserDTO dto);
+    //删除用户
+    void deleteUser(Long userId);
+    //根据用户id获取拥有的角色
+    List<Long> getRoleIdsByUserId(Long userId);
 }

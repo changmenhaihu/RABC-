@@ -16,13 +16,19 @@ public class result<T> {
      r.data = data;
      return r;
     }
+    public  static  <T> result<T> success(T data,String msg){
+        result<T> result =new result<>();
+        result.code=200;
+        result.msg=(msg);
+        result.data=data;
+        return result;
+    }
 
     //失败静态方法
-    public static  <T> result<T> fail(String msg){
+    public static  <T> result<T> fail(Integer code,String msg){
         result<T> r = new result<>();
         r.code = 400;
         r.msg = (msg);
-        r.data = null;
         return r;
     }
 
