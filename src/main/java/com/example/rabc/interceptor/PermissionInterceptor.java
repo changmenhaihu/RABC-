@@ -1,6 +1,7 @@
 package com.example.rabc.interceptor;
 
 import com.example.rabc.annotation.RequirePerm;
+import com.example.rabc.filter.AuthFilter;
 import com.example.rabc.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,7 +22,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request,
                              HttpServletResponse response,
                              Object handler) throws Exception{
-        //1.如果不是1映射到方法上 直接放行（访问静态资源
+        //1.如果不是映射到方法上 直接放行（访问静态资源
         if(!(handler instanceof HandlerMethod handlerMethod)){
             return  true;
         }
@@ -31,19 +32,10 @@ public class PermissionInterceptor implements HandlerInterceptor {
         if (requirePerm == null){
             return true;
         }
-        //4.从请求头拿token
-        String authorization = request.getHeader("Authorization");
-        if (authorization == null){
-            return true;
-        }
-        String token =authorization.startsWith("Bearer ")?authorization.substring(7):
-                authorization;
-
-        //5.查当前用户权限列表
-        List<String> perms = userService.getPermListByToken(token);
-        if (!perms.contains(requirePerm.value())) {
-            //如果没权限 设置响应状态码为403
-            response.setStatus(403);
+        //从request 域去出 filter 提前放入的权限列表 不再查询Redis
+        List<String> permList = (List<String>) request.getAttribute(AuthFilter.REQUEST_ATTR_PERM_LIST);
+        if (permList == null || permList.contains(requirePerm.value())){
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType("application/json;charset=utf-8");
             response.getWriter().write("{\"code\":403,\"msg\":\"权限不足，禁止访问\",\"data\":null}");
             return false;

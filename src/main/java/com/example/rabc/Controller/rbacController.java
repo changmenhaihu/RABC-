@@ -45,7 +45,7 @@ public class rbacController {
     }
     @PostMapping("/role/add")
     public result<Void> addRoles(@Valid @RequestBody AddRoleDTO dto){
-        roleService.addRole(dto.getRoleName());
+        roleService.addRole(dto.getRoleName(),dto.getRoleKey());
         return result.success(null);
     }
 }

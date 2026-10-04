@@ -21,21 +21,22 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public void addRole(String rolename){
+    public void addRole(String roleName,String roleKey){
         //1.判空
-        if (rolename == null || rolename.isBlank()){
+        if (roleName == null || roleName.isBlank()){
             throw new BusinessException("角色名不能为空");
         }
         //2.查重
         Long count = roleMapper.selectCount(
-                new LambdaQueryWrapper<Role>().eq(Role::getRoleName,rolename)
+                new LambdaQueryWrapper<Role>().eq(Role::getRoleName,roleName)
         );
         if (count>0){
             throw new BusinessException("角色名已存在");
         }
         //3.插入
         Role role = new Role();
-        role.setRoleName(rolename);
+        role.setRoleName(roleName);
+        role.setRoleKey(roleKey);
         roleMapper.insert(role);
     }
 

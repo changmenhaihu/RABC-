@@ -8,10 +8,12 @@ import com.example.rabc.mapper.RolePermissionMapper;
 import com.example.rabc.mapper.UserRoleMapper;
 import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Service
 public class RolePermissionService implements com.example.rabc.service.RolePermissionService {
    @Resource
     private RolePermissionMapper rolePermissionMapper;

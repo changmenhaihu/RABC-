@@ -15,7 +15,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     public void addInterceptor(InterceptorRegistry registry){
         //注册权限拦截器 拦截所有路径
-        registry.addInterceptor(permissionInterceptor).addPathPatterns("/**");
+        registry.addInterceptor(permissionInterceptor)
+                .addPathPatterns("/**")
+                .excludePathPatterns("/login");
 
     }
 }
