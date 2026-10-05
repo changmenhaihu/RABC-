@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
-public class RolePermissionService implements com.example.rabc.service.RolePermissionService {
+public class RolePermissionServiceImpl implements com.example.rabc.service.RolePermissionService {
    @Resource
     private RolePermissionMapper rolePermissionMapper;
    @Resource

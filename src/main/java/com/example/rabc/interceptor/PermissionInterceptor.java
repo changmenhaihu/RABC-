@@ -34,7 +34,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
         }
         //从request 域去出 filter 提前放入的权限列表 不再查询Redis
         List<String> permList = (List<String>) request.getAttribute(AuthFilter.REQUEST_ATTR_PERM_LIST);
-        if (permList == null || permList.contains(requirePerm.value())){
+        if (permList == null || ! permList.contains(requirePerm.value())){
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType("application/json;charset=utf-8");
             response.getWriter().write("{\"code\":403,\"msg\":\"权限不足，禁止访问\",\"data\":null}");

@@ -46,19 +46,30 @@ public result<UserVO> me(@RequestHeader("Authorization") String authorization,
     return result.success(null);
 }
 
+    @RequirePerm("user:view")
     @GetMapping("/user/list")
     public result<List<UserVO>> listUsers(){
     return result.success(userService.listAll());
     }
+
+    @RequirePerm("user::update")
     @PutMapping("/user/update")
     public result<Void> updateUser(@Valid @RequestBody UpdateUserDTO dto){
     userService.updateUser(dto);
     return result.success(null);
     }
-    @DeleteMapping("/user/{id}")
+
+    @RequirePerm("user:delete")
+    @DeleteMapping("/user/delete/{id}")
     public  result<List<Long>> deleteUser(@PathVariable Long id){
-    return result.success(userService.getRoleIdsByUserId(id));
+    boolean ok = userService.deleteUser(id);
+    if(!ok){
+        throw new BusinessException("用户不存在 删除失败");
     }
+    return result.success(null);
+    }
+
+    @RequirePerm("user:view")
     @GetMapping("/user/{id}/roles")
     public result<List<Long>> getUserRoles(@PathVariable Long id){
     return  result.success(userService.getRoleIdsByUserId(id));
