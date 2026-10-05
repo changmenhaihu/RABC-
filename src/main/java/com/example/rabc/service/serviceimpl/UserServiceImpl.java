@@ -177,18 +177,19 @@ public  Long getUserIdByToken(String token){
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void deleteUser(Long userId){
+    public boolean deleteUser(Long userId){
         if (userId == null){
             throw new BusinessException("userId 不能为空");
         }
         //先删除user_role 关联
         userRoleMapper.delete(
-                new LambdaQueryWrapper<UserRole>().eq(UserRole::getId,userId)
+                new LambdaQueryWrapper<UserRole>().eq(UserRole::getUserId,userId)
         );
         //再删除用户
         userMapper.deleteById(userId);
         //清理Redis缓存
-        redisTemplate.delete("perm:user"+userId);
+        redisTemplate.delete("perm:user:"+userId);
+        return true;
     }
     @Override
     public  List<Long> getRoleIdsByUserId(Long userId){
@@ -196,7 +197,7 @@ public  Long getUserIdByToken(String token){
             throw new BusinessException("userId不能为空");
         }
         return userRoleMapper.selectList(
-                new LambdaQueryWrapper<UserRole>().eq(UserRole::getId,userId)
+                new LambdaQueryWrapper<UserRole>().eq(UserRole::getRoleId,userId)
         ).stream().map(UserRole::getId).collect(Collectors.toList());
     }
 }

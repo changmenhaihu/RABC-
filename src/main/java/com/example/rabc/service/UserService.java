@@ -30,7 +30,9 @@ public interface UserService {
     //修改用户信息
     void updateUser(UpdateUserDTO dto);
     //删除用户
-    void deleteUser(Long userId);
+    boolean deleteUser(Long userId);
     //根据用户id获取拥有的角色
     List<Long> getRoleIdsByUserId(Long userId);
+
+
 }
