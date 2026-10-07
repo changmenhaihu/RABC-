@@ -6,6 +6,7 @@ import com.example.rabc.common.result;
 import com.example.rabc.dto.AddRoleDTO;
 import com.example.rabc.dto.AssignPermsDTO;
 import com.example.rabc.dto.AssignRolesDTO;
+import com.example.rabc.dto.UpdateRoleDTO;
 import com.example.rabc.entity.Role;
 import com.example.rabc.service.RolePermissionService;
 import com.example.rabc.service.RoleService;
@@ -32,9 +33,9 @@ public class rbacController {
     public result<List<Role>> listRoles(){
         return result.success(roleService.listAll());
     }
+
     //给用户分配角色
     //请求示例   {"userId":1,"roleIds":[1,3]}
-
 
     @RequirePerm("user:assignRoles")
     @PostMapping("/user/assignRoles")
@@ -58,10 +59,10 @@ public class rbacController {
         roleService.addRole(dto.getRoleName(),dto.getRoleKey());
         return result.success(null);
     }
-    @RequirePerm("role:update")  //这里传递参数标准做法是要加一个DTO文件的  但是我又觉得可以简化 role表暂时没有太多信息，后面应该还是要加，role表里实体变多后
+    @RequirePerm("role:update")  //已经增加dto文件
     @PutMapping("/role/update")
-    public result<?> updateRole(@RequestBody Role role){
-        roleService.updateRole(role);
+    public result<?> updateRole(@RequestBody UpdateRoleDTO dto){
+        roleService.updateRole(dto);
         return result.success(null);
     }
     @RequirePerm("role:delete")

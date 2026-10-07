@@ -2,6 +2,7 @@ package com.example.rabc.service.serviceimpl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.rabc.common.BusinessException;
+import com.example.rabc.dto.UpdateRoleDTO;
 import com.example.rabc.entity.Role;
 import com.example.rabc.entity.RolePermission;
 import com.example.rabc.mapper.RoleMapper;
@@ -47,18 +48,18 @@ public class RoleServiceImpl implements RoleService {
         role.setRoleKey(roleKey);
         roleMapper.insert(role);
     }
-   @Override
-    public void updateRole(Role role){
-        if (role.getId()==null){
+    @Override
+    public void updateRole(UpdateRoleDTO dto){
+        if (dto.getId()==null){
             throw new BusinessException("roleId 不能为空");
         }
-        Role oldrole = roleMapper.selectById(role.getId());
-        if (oldrole == null){
+        Role role = roleMapper.selectById(dto.getId());
+        if (role == null){
             throw new BusinessException("角色不存在");
         }
-        oldrole.setRoleName(role.getRoleName());
-        oldrole.setRoleKey(role.getRoleKey());
-        roleMapper.updateById(oldrole);
+        role.setRoleName(role.getRoleName());
+        role.setRoleKey(role.getRoleKey());
+        roleMapper.updateById(role);
    }
    @Override
    @Transactional(rollbackFor = Exception.class)
