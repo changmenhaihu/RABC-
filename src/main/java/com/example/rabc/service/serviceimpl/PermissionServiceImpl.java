@@ -13,6 +13,6 @@ public class PermissionServiceImpl implements PermissionService {
     @Resource
     private PermissionMapper permissionMapper;
     public List<Permission> listAll() {
-         return  permissionMapper.selectList(null);
+        return  permissionMapper.selectList(null);
      }
 }

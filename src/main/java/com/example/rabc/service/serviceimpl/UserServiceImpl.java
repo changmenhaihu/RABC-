@@ -198,6 +198,6 @@ public  Long getUserIdByToken(String token){
         }
         return userRoleMapper.selectList(
                 new LambdaQueryWrapper<UserRole>().eq(UserRole::getRoleId,userId)
-        ).stream().map(UserRole::getId).collect(Collectors.toList());
+        ).stream().map(UserRole::getUserId).collect(Collectors.toList());
     }
 }

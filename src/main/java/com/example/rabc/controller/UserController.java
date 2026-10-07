@@ -1,8 +1,8 @@
-package com.example.rabc.Controller;
+package com.example.rabc.controller;
 
 import com.example.rabc.annotation.RequirePerm;
 import com.example.rabc.common.BusinessException;
-import com.example.rabc.common.result;
+import com.example.rabc.common.Result;
 import com.example.rabc.dto.UpdateUserDTO;
 import com.example.rabc.entity.User;
 import com.example.rabc.filter.AuthFilter;
@@ -21,7 +21,7 @@ public class UserController {
     private UserService userService;
 
 @GetMapping("/me")
-public result<UserVO> me(@RequestHeader("Authorization") String authorization,
+public Result<UserVO> me(@RequestHeader("Authorization") String authorization,
                          HttpServletRequest request) {
     if (authorization == null || authorization.isBlank()) {
         throw new BusinessException("未登录");
@@ -37,42 +37,42 @@ public result<UserVO> me(@RequestHeader("Authorization") String authorization,
     if (user == null) {
         throw new BusinessException("用户不存在");
     }
-    return result.success(user);
+    return Result.success(user);
 }
     @RequirePerm("user:add")
     @PostMapping("user/add")
-    public result<User> addUser(@RequestBody User user){
+    public Result<User> addUser(@Valid @RequestBody User user){
     userService.addUser(user);
-    return result.success(null);
+    return Result.success(null);
 }
 
     @RequirePerm("user:view")
     @GetMapping("/user/list")
-    public result<List<UserVO>> listUsers(){
-    return result.success(userService.listAll());
+    public Result<List<UserVO>> listUsers(){
+    return Result.success(userService.listAll());
     }
 
-    @RequirePerm("user::update")
+    @RequirePerm("user:update")
     @PutMapping("/user/update")
-    public result<Void> updateUser(@Valid @RequestBody UpdateUserDTO dto){
+    public Result<Void> updateUser(@Valid @RequestBody UpdateUserDTO dto){
     userService.updateUser(dto);
-    return result.success(null);
+    return Result.success(null);
     }
 
     @RequirePerm("user:delete")
     @DeleteMapping("/user/delete/{id}")
-    public  result<List<Long>> deleteUser(@PathVariable Long id){
+    public Result<Void> deleteUser(@PathVariable Long id){
     boolean ok = userService.deleteUser(id);
     if(!ok){
         throw new BusinessException("用户不存在 删除失败");
     }
-    return result.success(null);
+    return Result.success(null);
     }
 
     @RequirePerm("user:view")
     @GetMapping("/user/{id}/roles")
-    public result<List<Long>> getUserRoles(@PathVariable Long id){
-    return  result.success(userService.getRoleIdsByUserId(id));
+    public Result<List<Long>> getUserRoles(@PathVariable Long id){
+    return  Result.success(userService.getRoleIdsByUserId(id));
     }
 }
 

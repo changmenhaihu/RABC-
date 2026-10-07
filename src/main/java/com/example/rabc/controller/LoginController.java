@@ -1,7 +1,7 @@
-package com.example.rabc.Controller;
+package com.example.rabc.controller;
 
 import com.example.rabc.common.BusinessException;
-import com.example.rabc.common.result;
+import com.example.rabc.common.Result;
 import com.example.rabc.dto.Logindto;
 import com.example.rabc.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,13 +18,13 @@ public class LoginController {
         this.userService = userService;
     }
     @PostMapping("/login")
-    public result<String> login(@RequestBody Logindto logindto){
+    public Result<String> login(@RequestBody Logindto logindto){
         String token = userService.login(logindto.getUsername(),
                 logindto.getPassword());
-        return result.success(token);
+        return Result.success(token);
     }
     @PostMapping("/logout")
-    public result<?> logout(HttpServletRequest request){
+    public Result<?> logout(HttpServletRequest request){
         String authorization = request.getHeader("Authorization");
         String token;
         if(authorization == null) {
@@ -36,6 +36,6 @@ public class LoginController {
             token = authorization;
         } //可以优化为三元运算符 ?
         userService.logout(token);
-       return result.success("退出成功");
+       return Result.success("退出成功");
     }
 }

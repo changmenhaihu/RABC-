@@ -16,7 +16,7 @@ import java.util.List;
 @Service
 public class UserRoleServiceImpl implements UserRoleService {
     @Resource
-    private UserRoleMapper useerRoleMapper;
+    private UserRoleMapper userRoleMapper;
     @Resource
     private RedisTemplate<String,Object> redisTemplate;
     @Override
@@ -29,14 +29,14 @@ public class UserRoleServiceImpl implements UserRoleService {
         if (roleIds == null){
             throw new BusinessException("roleIds 不能为空");}
         //删除用户原有角色
-        useerRoleMapper.delete(
-                new LambdaQueryWrapper<UserRole>().eq(UserRole::getId,userId));
+        userRoleMapper.delete(
+                new LambdaQueryWrapper<UserRole>().eq(UserRole::getUserId,userId));
         //批量插入新角色
             for (Long roleId :roleIds){
                 UserRole userRole = new UserRole();
                 userRole.setUserId(userId);
                 userRole.setRoleId(roleId);
-                useerRoleMapper.insert(userRole);
+                userRoleMapper.insert(userRole);
             }
         //删除用户的权限缓存
         redisTemplate.delete("perm:user:"+userId);
