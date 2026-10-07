@@ -1,8 +1,8 @@
-package com.example.rabc.Controller;
+package com.example.rabc.controller;
 
 
 import com.example.rabc.annotation.RequirePerm;
-import com.example.rabc.common.result;
+import com.example.rabc.common.Result;
 import com.example.rabc.entity.Permission;
 import com.example.rabc.service.PermissionService;
 import jakarta.annotation.Resource;
@@ -17,9 +17,9 @@ import java.util.List;
 public class PermissionController {
     @Resource
     private PermissionService permissionService;
-    @RequirePerm("perm::list")
+    @RequirePerm("perm:list")
     @GetMapping("/list")
-    public result<List<Permission>> listAll(){
-        return result.success(permissionService.listAll());
+    public Result<List<Permission>> listAll(){
+        return Result.success(permissionService.listAll());
     }
 }

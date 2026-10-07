@@ -6,21 +6,23 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("Permission")
-public class Permission {
+@TableName("sys_menu")
+public class SysMenu {
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    private String permKey;
-    private String perName;
-
+    private Long parentId;
+    private String menuName;
+    private String path;
+    private String component;
+    private String icon;
+    private Integer sort;
     private Integer status;
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
     @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime updatetime;
+    private LocalDateTime updateTime;
     @TableLogic
     private Integer deleted;
-
 }

@@ -42,7 +42,7 @@ public class RolePermissionServiceImpl implements com.example.rabc.service.RoleP
        }
    //找出所有拥有这个角色的用户  清空他们的权限缓存
        List<Long> userIds = userRoleMapper.selectList(
-               new LambdaQueryWrapper<UserRole>().eq(UserRole::getId,roleId)).stream().map(UserRole::getUserId).toList();
+               new LambdaQueryWrapper<UserRole>().eq(UserRole::getRoleId,roleId)).stream().map(UserRole::getUserId).toList();
 
                for(Long userId:userIds){
                    redisTemplate.delete("perm:user:"+userId);

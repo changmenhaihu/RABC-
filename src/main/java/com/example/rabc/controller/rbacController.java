@@ -1,8 +1,8 @@
-package com.example.rabc.Controller;
+package com.example.rabc.controller;
 
 import com.example.rabc.annotation.RequirePerm;
 import com.example.rabc.common.BusinessException;
-import com.example.rabc.common.result;
+import com.example.rabc.common.Result;
 import com.example.rabc.dto.AddRoleDTO;
 import com.example.rabc.dto.AssignPermsDTO;
 import com.example.rabc.dto.AssignRolesDTO;
@@ -30,8 +30,8 @@ public class rbacController {
     //查所有的角色
     @RequirePerm("role:list")
     @GetMapping("/role/list")
-    public result<List<Role>> listRoles(){
-        return result.success(roleService.listAll());
+    public Result<List<Role>> listRoles(){
+        return Result.success(roleService.listAll());
     }
 
     //给用户分配角色
@@ -39,39 +39,39 @@ public class rbacController {
 
     @RequirePerm("user:assignRoles")
     @PostMapping("/user/assignRoles")
-    public result<Void> assignRoles(@Valid @RequestBody AssignRolesDTO dto){
+    public Result<Void> assignRoles(@Valid @RequestBody AssignRolesDTO dto){
         userRoleService.assignRoles(dto.getUserId(),dto.getRoleIds());
-        return result.success(null);
+        return Result.success(null);
     }
     //给角色分配权限
     //请求示例  {“roleId":1,"permIds":[1,3]}
     @RequirePerm("role:assignPerm")
     @PostMapping("/role/assignPerms")
-    public result<Void> assignPerms(@RequestBody AssignPermsDTO dto){
+    public Result<Void> assignPerms(@RequestBody AssignPermsDTO dto){
         rolePermissionService.assignPerms(dto.getRoleId(),dto.getPermIds());
-        return result.success(null);
+        return Result.success(null);
     }
 
 
     @RequirePerm("role:add")
     @PostMapping("/role/add")
-    public result<Void> addRoles(@Valid @RequestBody AddRoleDTO dto){
+    public Result<Void> addRoles(@Valid @RequestBody AddRoleDTO dto){
         roleService.addRole(dto.getRoleName(),dto.getRoleKey());
-        return result.success(null);
+        return Result.success(null);
     }
     @RequirePerm("role:update")  //已经增加dto文件
     @PutMapping("/role/update")
-    public result<?> updateRole(@RequestBody UpdateRoleDTO dto){
+    public Result<?> updateRole(@RequestBody UpdateRoleDTO dto){
         roleService.updateRole(dto);
-        return result.success(null);
+        return Result.success(null);
     }
     @RequirePerm("role:delete")
     @DeleteMapping("/role/delete/{id}")
-    public result<?> deleteRole(@PathVariable Long id){
+    public Result<?> deleteRole(@PathVariable Long id){
         boolean ok = roleService.deleteRole(id);
         if (!ok){
             throw new BusinessException("角色不存在");
         }
-        return result.success(null);
+        return Result.success(null);
     }
 }
