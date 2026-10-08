@@ -74,4 +74,11 @@ public class rbacController {
         }
         return Result.success(null);
     }
+    @RequirePerm("role:assignMenu")
+    @PostMapping("/assignMenu")
+    public Result<Void> assignMenu(@RequestParam Long roleId, @RequestBody List<Long> menuIdList) {
+        roleService.assignMenus(roleId, menuIdList);
+        return Result.success(null);
+    }
+
 }
