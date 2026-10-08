@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace必须和Mapper接口全类名完全一致 -->
+<mapper namespace="com.example.rabc.mapper.SysMenuMapper">
+
+    <select id="selectMenusByUserId" resultType="com.example.rabc.entity.SysMenu">
+        SELECT DISTINCT m.*
+        FROM sys_menu m
+        JOIN sys_role_menu rm ON rm.menu_id = m.id
+        JOIN sys_user_role ur ON ur.role_id = rm.role_id
+        WHERE ur.user_id = #{userId}
+        AND m.status = 1
+        AND m.deleted = 0
+        ORDER BY m.sort ASC
+    </select>
+
+    <select id="countRoleMenuBind" resultType="int">
+        SELECT COUNT(1) FROM sys_role_menu WHERE menu_id = #{menuId}
+    </select>
+
+</mapper>

@@ -1,10 +1,12 @@
 package com.example.rabc.vo;
 
 import com.example.rabc.entity.SysMenu;
+import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Data
 public class MenuTreeVO {
     private Long id;
     private Long parentId;

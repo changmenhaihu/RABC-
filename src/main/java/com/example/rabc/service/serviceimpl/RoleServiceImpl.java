@@ -7,6 +7,7 @@ import com.example.rabc.entity.Role;
 import com.example.rabc.entity.RolePermission;
 import com.example.rabc.mapper.RoleMapper;
 import com.example.rabc.mapper.RolePermissionMapper;
+import com.example.rabc.mapper.SysMenuMapper;
 import com.example.rabc.service.RoleService;
 import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -22,6 +23,12 @@ public class RoleServiceImpl implements RoleService {
     private RoleMapper roleMapper;
     @Resource
     private RolePermissionMapper rolePermissionMapper;
+    @Resource
+    private SysMenuMapper sysMenuMapper;
+    @Resource
+
+
+
     @Override
     public List<Role> listAll(){
         return roleMapper.selectList(null);
@@ -85,4 +92,33 @@ public class RoleServiceImpl implements RoleService {
        }
        return true;
    }
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void assignMenus(Long roleId, List<Long> menuIdList) {
+        // 1. 删除该角色原有全部菜单关联
+        LambdaQueryWrapper<RoleMenu> wrapper = new LambdaQueryWrapper<RoleMenu>()
+                .eq(RoleMenu::getRoleId, roleId);
+        roleMenuMapper.delete(wrapper);
+
+        // 2. 批量新增
+        if (menuIdList != null && !menuIdList.isEmpty()) {
+            List<RoleMenu> batchList = menuIdList.stream().map(menuId -> {
+                RoleMenu rm = new RoleMenu();
+                rm.setRoleId(roleId);
+                rm.setMenuId(menuId);
+                return rm;
+            }).collect(Collectors.toList());
+            // 批量插入，MP可使用insertBatch
+            for (RoleMenu rm : batchList) {
+                roleMenuMapper.insert(rm);
+            }
+        }
+        // 【缓存清理】找到所有拥有该角色的用户，清除用户菜单缓存
+        List<Long> userIdList = userRoleMapper.selectList(
+                new LambdaQueryWrapper<UserRole>().eq(UserRole::getRoleId, roleId)
+        ).stream().map(UserRole::getUserId).collect(Collectors.toList());
+        for (Long uid : userIdList) {
+            redisTemplate.delete("menu:user:" + uid);
+        }
+    }
 }

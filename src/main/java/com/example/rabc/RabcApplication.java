@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 @MapperScan("com.example.rabc.mapper")
+
 public class RabcApplication {
 
     public static void main(String[] args) {
