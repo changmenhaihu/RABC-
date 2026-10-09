@@ -4,10 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.rabc.common.BusinessException;
 import com.example.rabc.dto.UpdateRoleDTO;
 import com.example.rabc.entity.Role;
+import com.example.rabc.entity.RoleMenu;
 import com.example.rabc.entity.RolePermission;
-import com.example.rabc.mapper.RoleMapper;
-import com.example.rabc.mapper.RolePermissionMapper;
-import com.example.rabc.mapper.SysMenuMapper;
+import com.example.rabc.entity.UserRole;
+import com.example.rabc.mapper.*;
 import com.example.rabc.service.RoleService;
 import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -26,7 +26,9 @@ public class RoleServiceImpl implements RoleService {
     @Resource
     private SysMenuMapper sysMenuMapper;
     @Resource
-
+    private RoleMenuMapper roleMenuMapper;
+    @Resource
+    private UserRoleMapper userRoleMapper;
 
 
     @Override
@@ -107,7 +109,7 @@ public class RoleServiceImpl implements RoleService {
                 rm.setRoleId(roleId);
                 rm.setMenuId(menuId);
                 return rm;
-            }).collect(Collectors.toList());
+            }).toList();
             // 批量插入，MP可使用insertBatch
             for (RoleMenu rm : batchList) {
                 roleMenuMapper.insert(rm);
@@ -116,7 +118,7 @@ public class RoleServiceImpl implements RoleService {
         // 【缓存清理】找到所有拥有该角色的用户，清除用户菜单缓存
         List<Long> userIdList = userRoleMapper.selectList(
                 new LambdaQueryWrapper<UserRole>().eq(UserRole::getRoleId, roleId)
-        ).stream().map(UserRole::getUserId).collect(Collectors.toList());
+        ).stream().map(UserRole::getUserId).toList();
         for (Long uid : userIdList) {
             redisTemplate.delete("menu:user:" + uid);
         }
