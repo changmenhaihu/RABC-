@@ -13,7 +13,6 @@ public class Permission {
 
     private String permKey;
     private String perName;
-
     private Integer status;
 
     @TableField(fill = FieldFill.INSERT)
