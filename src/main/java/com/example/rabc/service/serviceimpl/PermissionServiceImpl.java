@@ -1,6 +1,7 @@
 package com.example.rabc.service.serviceimpl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.rabc.common.BusinessException;
 import com.example.rabc.entity.Permission;
 import com.example.rabc.entity.RolePermission;
@@ -9,8 +10,7 @@ import com.example.rabc.mapper.RolePermissionMapper;
 import com.example.rabc.service.PermissionService;
 import com.example.rabc.service.RolePermissionService;
 import jakarta.annotation.Resource;
-import org.apache.tomcat.util.net.jsse.PEMFile;
-import org.springframework.data.domain.Page;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -26,6 +26,10 @@ public class PermissionServiceImpl implements PermissionService {
     private  RolePermissionMapper rolePermissionMapper;
     @Resource
     private RolePermissionService rolePermissionService;
+
+    @Resource
+    private RedisTemplate<String,Object> redisTemplate;
+
     public List<Permission> listAll() {
         return  permissionMapper.selectList(null);
      }
@@ -47,7 +51,7 @@ public class PermissionServiceImpl implements PermissionService {
         if (!StringUtils.hasText(permission.getPermKey())){
             throw new BusinessException("permKey 不能为空");
         }
-        if (!StringUtils.hasText(permission.getPerName())){
+        if (!StringUtils.hasText(permission.getPermName())){
             throw new BusinessException("permName 不能为空");
         }
          Long count = permissionMapper.selectCount(
@@ -96,10 +100,17 @@ public class PermissionServiceImpl implements PermissionService {
      }
      //根据权限id清空所有相关联用户的权限缓存
     private void clearCacheByPermId(Long permId){
+        //查询该权限关联的角色id
         List<Long> roleIds = rolePermissionMapper.selectList(
                 new LambdaQueryWrapper<RolePermission>()
                         .eq(RolePermission::getPermId,permId)
         ).stream().map(RolePermission::getRoleId).distinct().toList();
+        //遍历角色ID  清理每个角色的权限缓存
+        for (Long roleId : roleIds){
+            redisTemplate.delete("role:permission"+roleId);
+        }
+        //如果有权限单独缓存  也可以清理
+        redisTemplate.delete("permission"+permId);
     }
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -111,11 +122,6 @@ public class PermissionServiceImpl implements PermissionService {
         if (existing  == null){
             throw new BusinessException("权限不存在");
         }
-        //先查出相关联的角色
-        List<Long> roleIds = rolePermissionMapper.selectList(
-                new LambdaQueryWrapper<RolePermission>()
-                        .eq(RolePermission::getPermId,id)
-        ).stream().map(RolePermission::getRoleId).distinct().toList();
         //删除角色-权限关联
         rolePermissionMapper.delete(
                 new LambdaQueryWrapper<RolePermission>().eq(RolePermission::getPermId,id)
@@ -123,16 +129,16 @@ public class PermissionServiceImpl implements PermissionService {
         //逻辑删除权限（@TableLogic 自动处理）
         permissionMapper.deleteById(id);
         //最后清理缓存
-
+        clearCacheByPermId(id);
     }
     //分页查询功能
     @Override
-    public Page<Permission> page(int pageNum,int pageSize,String permKey,String permName,
-    Integer status){
+    public Page<Permission> page(int pageNum, int pageSize, String permKey, String permName,
+                                 Integer status){
         Page<Permission> page = new Page<>(pageNum,pageSize);
         LambdaQueryWrapper<Permission> wrapper = new LambdaQueryWrapper<>();
         wrapper.like(StringUtils.hasText(permKey),Permission::getPermKey,permKey)
-                .like(StringUtils.hasText(permName),Permission::getPerName,permName)
+                .like(StringUtils.hasText(permName),Permission::getPermName,permName)
                 .eq(status != null,Permission::getStatus,status)
                 .orderByDesc(Permission::getId);
         return permissionMapper.selectPage(page,wrapper);

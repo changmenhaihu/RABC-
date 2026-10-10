@@ -1,7 +1,7 @@
 package com.example.rabc.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.rabc.entity.Permission;
-import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -13,6 +13,6 @@ public interface PermissionService {
     void create(Permission permission);
     void  update(Permission permission);
     void delete(Long id);
-    Page<Permission> page(int pageNum,int pageSize,String permKey,String permName,
+    Page<Permission> page(int pageNum, int pageSize, String permKey, String permName,
                           Integer status);
 }
