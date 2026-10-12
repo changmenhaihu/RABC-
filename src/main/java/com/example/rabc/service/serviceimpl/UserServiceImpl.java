@@ -200,4 +200,16 @@ public  Long getUserIdByToken(String token){
                 new LambdaQueryWrapper<UserRole>().eq(UserRole::getRoleId,userId)
         ).stream().map(UserRole::getUserId).collect(Collectors.toList());
     }
+
+    @Override
+    public String getUserNameById(Long userId){
+        if (userId == null){
+            throw new BusinessException("userId不能为空");
+        }
+        User user =  userMapper.selectById(userId);
+        if (user == null){
+            throw new BusinessException("用户不存在");
+        }
+        return user.getUsername();
+    }
 }

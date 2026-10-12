@@ -23,7 +23,9 @@ public class AuthFilter implements Filter{
 
    public static final String REQUEST_ATTR_PERM_LIST = "permList";
    public static final String REQUEST_ATTR_USER_ID = "userId";
-   @Override
+    public static final String REQUEST_ATTR_USER_NAME = "username";
+
+    @Override
     public void doFilter(ServletRequest request,ServletResponse response,
                          FilterChain chain) throws ServletException, IOException {
        //转成http请求，响应对象
@@ -66,15 +68,18 @@ public class AuthFilter implements Filter{
            return;
        }
        //token 续期 每次合法访问就刷新过期时间
-     //  String redisKey = TOKEN_PREFIX + token;
-      // redisTemplate.expire(redisKey,TOKEN_EXPIRE_SECONDS, TimeUnit.SECONDS);
+       //  String redisKey = TOKEN_PREFIX + token;
+       // redisTemplate.expire(redisKey,TOKEN_EXPIRE_SECONDS, TimeUnit.SECONDS);
        //上面的校验通过请求继续往后走
        //对重复查询的优化 一次查询的权限列表  存入request域  拦截器直接读取
        List<String> permList = userService.getPermListByToken(token);
        //Controller层也可以从这里取其他 信息 ，额外存入userId
        Long userId = userService.getUserIdByToken(token);
+       String userName = userService.getUserNameById(userId);
+
        req.setAttribute(REQUEST_ATTR_PERM_LIST,permList);
        req.setAttribute(REQUEST_ATTR_USER_ID,userId);
+       req.setAttribute(REQUEST_ATTR_USER_NAME,userName);
        chain.doFilter(request,response);
 
    }

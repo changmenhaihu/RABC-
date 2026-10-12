@@ -33,6 +33,7 @@ public interface UserService {
     boolean deleteUser(Long userId);
     //根据用户id获取拥有的角色
     List<Long> getRoleIdsByUserId(Long userId);
-
+    //根据用户ID获取用户名
+    String getUserNameById(Long userId);
 
 }

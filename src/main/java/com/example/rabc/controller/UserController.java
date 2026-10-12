@@ -1,10 +1,12 @@
 package com.example.rabc.controller;
 
+import com.example.rabc.annotation.OperateLog;
 import com.example.rabc.annotation.RequirePerm;
 import com.example.rabc.common.BusinessException;
 import com.example.rabc.common.Result;
 import com.example.rabc.dto.UpdateUserDTO;
 import com.example.rabc.entity.User;
+import com.example.rabc.enums.OperateMoudleEnum;
 import com.example.rabc.filter.AuthFilter;
 import com.example.rabc.service.UserService;
 import com.example.rabc.vo.UserVO;
@@ -41,6 +43,7 @@ public Result<UserVO> me(@RequestHeader("Authorization") String authorization,
 }
     @RequirePerm("user:add")
     @PostMapping("user/add")
+    @OperateLog(module = OperateMoudleEnum.USER_MANAGE,desc = "新增用户")
     public Result<User> addUser(@Valid @RequestBody User user){
     userService.addUser(user);
     return Result.success(null);
@@ -54,6 +57,7 @@ public Result<UserVO> me(@RequestHeader("Authorization") String authorization,
 
     @RequirePerm("user:update")
     @PutMapping("/user/update")
+    @OperateLog(module = OperateMoudleEnum.USER_MANAGE,desc = "修改用户")
     public Result<Void> updateUser(@Valid @RequestBody UpdateUserDTO dto){
     userService.updateUser(dto);
     return Result.success(null);
@@ -61,6 +65,7 @@ public Result<UserVO> me(@RequestHeader("Authorization") String authorization,
 
     @RequirePerm("user:delete")
     @DeleteMapping("/user/delete/{id}")
+    @OperateLog(module = OperateMoudleEnum.USER_MANAGE,desc = "删除用户")
     public Result<Void> deleteUser(@PathVariable Long id){
     boolean ok = userService.deleteUser(id);
     if(!ok){

@@ -2,9 +2,11 @@ package com.example.rabc.controller;
 
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.example.rabc.annotation.OperateLog;
 import com.example.rabc.annotation.RequirePerm;
 import com.example.rabc.common.Result;
 import com.example.rabc.entity.Permission;
+import com.example.rabc.enums.OperateMoudleEnum;
 import com.example.rabc.service.PermissionService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
@@ -27,14 +29,18 @@ public class PermissionController {
     public Result<Permission> getById(@RequestParam Long id) {
         return Result.success(permissionService.getById(id));
     }
+
     @RequirePerm("perm:add")
+    @OperateLog(module= OperateMoudleEnum.PERMISSION_MANAGE,desc = "增加权限")
     @PostMapping("/createpermission")
     public Result<Void> create(@RequestBody Permission permission){
         permissionService.create(permission);
         return Result.success(null);
     }
+
     @RequirePerm("perm:edit")
     @PutMapping("/updatePermission")
+    @OperateLog(module=OperateMoudleEnum.PERMISSION_MANAGE,desc = "关系权限")
     public Result<Void> update(@RequestBody Permission permission){
         permissionService.update(permission);
         return Result.success(null);
@@ -42,6 +48,7 @@ public class PermissionController {
 
     @RequirePerm("perm:delete")
     @DeleteMapping("/deletePermission")
+    @OperateLog(module=OperateMoudleEnum.PERMISSION_MANAGE,desc = "删除权限")
     public Result<Void> delete(@RequestParam Long id){
         permissionService.delete(id);
         return Result.success(null);

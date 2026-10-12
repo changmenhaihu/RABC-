@@ -1,5 +1,6 @@
 package com.example.rabc.controller;
 
+import com.example.rabc.annotation.OperateLog;
 import com.example.rabc.annotation.RequirePerm;
 import com.example.rabc.common.PageResult;
 import com.example.rabc.common.Result;
@@ -7,6 +8,7 @@ import com.example.rabc.dto.AddMenuDTO;
 import com.example.rabc.dto.MenuQueryDTO;
 import com.example.rabc.dto.UpdateMenuDTO;
 import com.example.rabc.entity.SysMenu;
+import com.example.rabc.enums.OperateMoudleEnum;
 import com.example.rabc.service.SysMenuService;
 import com.example.rabc.vo.MenuTreeVO;
 import jakarta.annotation.Resource;
@@ -40,12 +42,14 @@ public class SysMenuController {
 
     @RequirePerm("menu:add")
     @PostMapping("/add")
+    @OperateLog(module = OperateMoudleEnum.MENU_MANAGE,desc = "增加菜单")
     public Result<Long> add(@Valid @RequestBody AddMenuDTO dto) {
         return Result.success(sysMenuService.add(dto));
     }
 
     @RequirePerm("menu:update")
     @PutMapping("/update")
+    @OperateLog(module = OperateMoudleEnum.MENU_MANAGE,desc = "更新菜单")
     public Result<Void> update(@Valid @RequestBody UpdateMenuDTO dto) {
         sysMenuService.update(dto);
         return Result.success(null);
@@ -53,6 +57,7 @@ public class SysMenuController {
 
     @RequirePerm("menu:delete")
     @DeleteMapping("/delete/{id}")
+    @OperateLog(module = OperateMoudleEnum.MENU_MANAGE,desc = "删除菜单")
     public Result<Void> delete(@PathVariable Long id) {
         sysMenuService.delete(id);
         return Result.success(null);
