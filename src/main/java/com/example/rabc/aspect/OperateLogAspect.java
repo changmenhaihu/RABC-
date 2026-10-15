@@ -2,10 +2,11 @@ package com.example.rabc.aspect;
 
 import com.alibaba.fastjson2.JSON;
 import com.example.rabc.annotation.OperateLog;
-import com.example.rabc.entity.SysoperateLog;
-import com.example.rabc.service.SysOperateLogService;
+import com.example.rabc.dto.OperateLogDTO;
+import com.example.rabc.service.serviceimpl.OperateLogSender;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -19,10 +20,11 @@ import java.time.LocalDateTime;
 
 @Aspect
 @Component
+@Slf4j
 public class OperateLogAspect {
-    @Resource
-    private SysOperateLogService sysOperateLogService;
 
+    @Resource
+    private OperateLogSender operateLogSender;
     //切点：拦截带有@OperateLog的方法
     @Pointcut("@annotation(com.example.rabc.annotation.OperateLog")
     public void logPointCut(){}
@@ -30,40 +32,44 @@ public class OperateLogAspect {
     @Around("logPointCut()")
     public Object around (ProceedingJoinPoint joinPoint) throws Throwable{
         long start = System.currentTimeMillis();
-        SysoperateLog sysoperateLog =new SysoperateLog();
+        OperateLogDTO dto = new OperateLogDTO();
 
         //默认成功
-        sysoperateLog.setIsSuccess(1);
-        sysoperateLog.setCreateTime(LocalDateTime.now());
+        dto.setIsSuccess(1);
+        dto.setCreateTime(LocalDateTime.now());
 
         //获取request
         ServletRequestAttributes attributes = (ServletRequestAttributes) joinPoint.getSignature();
-        HttpServletRequest request = attributes.getRequest();
+        HttpServletRequest request =null;
+        if (attributes!=null){
+            request = attributes.getRequest();
+        }
 
         //获取注解信息
         MethodSignature signature =(MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
         OperateLog logAnno = method.getAnnotation(OperateLog.class);
-        sysoperateLog.setModule(logAnno.module().getModuleName());
-        sysoperateLog.setDesc(logAnno.desc());
+        dto.setModule(logAnno.module().getModuleName());
+        dto.setDesc(logAnno.desc());
 
         //请求基础信息
-        sysoperateLog.setRequestUrl(request.getRequestURI());;
-        sysoperateLog.setRequestMethod(request.getMethod());
-        sysoperateLog.setIp(sysoperateLog.getIp());
+        if (request!=null) {
+            dto.setRequestUrl(request.getRequestURI());
+            dto.setRequestMethod(request.getMethod());
+            dto.setIp(getIp(request));
 
-        //从AuthFilter存入request属性中拿取用户信息
-        Long userId = (Long) request.getAttribute("userId");
-        String username = (String) request.getAttribute("username");
-        sysoperateLog.setUserId(userId);
-        sysoperateLog.setUserName(username);
-
+            //从AuthFilter存入request属性中拿取用户信息
+            Long userId = (Long) request.getAttribute("userId");
+            String username = (String) request.getAttribute("username");
+            dto.setUserId(userId);
+            dto.setUserName(username);
+        }
         //请求参数
         Object[] args = joinPoint.getArgs();
         try {
-            sysoperateLog.setRequestParams(JSON.toJSONString(args));
+            dto.setRequestParams(JSON.toJSONString(args));
         }catch (Exception e){
-            sysoperateLog.setRequestParams("参数序列化失败");
+            dto.setRequestParams("参数序列化失败");
         }
 
         Object result;
@@ -71,27 +77,38 @@ public class OperateLogAspect {
             //执行Controller方法
             result = joinPoint.proceed();
             //保存返回的结果
-            sysoperateLog.setResponseResult(JSON.toJSONString(request));
+            dto.setResponseResult(JSON.toJSONString(result));
         }catch (Exception e){
              //捕获业务异常  标记失败
-            sysoperateLog.setIsSuccess(0);
-            sysoperateLog.setErrorMsg(e.getMessage());
+            dto.setIsSuccess(0);
+            dto.setErrorMsg(e.getMessage());
             throw  e;}
        finally {
             //耗时
             long cost = System.currentTimeMillis() - start;
-            sysoperateLog.setCostTime(cost);
-            //同步写入数据库‘
-            sysOperateLogService.saveOperateLog(sysoperateLog);
+            dto.setCostTime(cost);
+            //同步写入数据库‘  写日志不影响业务
+            try {
+            operateLogSender.sendOperateLog(dto);
+            }catch (Exception e){
+                log.error("保存操作日志失败,logId={}",dto.getLogId(), e);
+            }
+
         }
         return result;
     }
-    //获取客户端ip
-    private String getIp(HttpServletRequest request){
+    // 获取客户端 IP
+    private String getIp(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null ||ip.isEmpty()){
-            ip = request.getRemoteAddr();
+        if (ip != null && !ip.isBlank()) {
+            return ip.split(",")[0].trim();
         }
-        return ip;
+
+        String realIp = request.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) {
+            return realIp;
+        }
+
+        return request.getRemoteAddr();
     }
 }

@@ -22,6 +22,18 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+
+        <!-- MapStruct 1.6.x 才完整支持 Java 21 -->
+        <mapstruct.version>1.6.3</mapstruct.version>
+        <lombok.version>1.18.34</lombok.version>
+        <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
+        <mybatis-plus.version>3.5.17</mybatis-plus.version>
+        <fastjson2.version>2.0.32</fastjson2.version>
+        <rocketmq-spring.version>2.3.5</rocketmq-spring.version>
+        <jbcrypt.version>0.4</jbcrypt.version>
+        <jetbrains-annotations.version>24.0.1</jetbrains-annotations.version>
     </properties>
 
     <dependencies>
@@ -43,7 +55,7 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
-        <!-- devtools热部署 -->
+        <!-- devtools 热部署 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
@@ -55,51 +67,63 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
             <optional>true</optional>
         </dependency>
 
-        <!-- mysql驱动 -->
+        <!-- mysql 驱动 -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
 
-        <!-- MyBatis‑Plus SpringBoot3专属starter -->
+        <!-- MyBatis-Plus SpringBoot3 starter（只留一份） -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
-            <version>3.5.17</version>
+            <version>${mybatis-plus.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
-            <version>3.5.17</version>
-        </dependency>
-        <!--分页插件必须的独立依赖！！！3.5.9+必须手动写 -->
+
+        <!-- 分页插件必须的独立依赖，3.5.9+ 手动引入 -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-jsqlparser</artifactId>
-            <version>3.5.17</version>
+            <version>${mybatis-plus.version}</version>
         </dependency>
-       <!--json序列胡-->
+
+        <!-- json序列化 -->
         <dependency>
             <groupId>com.alibaba.fastjson2</groupId>
             <artifactId>fastjson2</artifactId>
-            <version>2.0.32</version>
+            <version>${fastjson2.version}</version>
         </dependency>
-        <!--AOP切面-->
+
+        <!-- AOP 切面 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
 
+        <!-- RocketMQ 消息队列 -->
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-spring-boot-starter</artifactId>
+            <version>${rocketmq-spring.version}</version>
+        </dependency>
 
         <!-- 密码加密 jbcrypt -->
         <dependency>
             <groupId>org.mindrot</groupId>
             <artifactId>jbcrypt</artifactId>
-            <version>0.4</version>
+            <version>${jbcrypt.version}</version>
+        </dependency>
+
+        <!-- MapStruct 运行依赖（必须，之前漏了） -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${mapstruct.version}</version>
         </dependency>
 
         <!-- 测试 -->
@@ -112,14 +136,13 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>24.0.1</version>
-            <scope>compile</scope>
+            <version>${jetbrains-annotations.version}</version>
         </dependency>
     </dependencies>
 
     <build>
         <resources>
-            <!-- 支持java包下面存放mapper的xml文件 -->
+            <!-- 支持 java 包下面存放 mapper 的 xml 文件 -->
             <resource>
                 <directory>src/main/java</directory>
                 <includes>
@@ -135,14 +158,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
-                </configuration>
             </plugin>
 
             <plugin>
@@ -152,11 +167,23 @@
                 <configuration>
                     <source>21</source>
                     <target>21</target>
-                    <encoding>UTF‑8</encoding>
+                    <encoding>UTF-8</encoding>
                     <annotationProcessorPaths>
+                        <!-- 顺序很重要：lombok -> lombok-mapstruct-binding -> mapstruct-processor -->
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok-mapstruct-binding</artifactId>
+                            <version>${lombok-mapstruct-binding.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${mapstruct.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>

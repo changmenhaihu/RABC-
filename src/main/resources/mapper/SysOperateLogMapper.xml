@@ -1,0 +1,4 @@
+<select id="selectCountByLogId" resultType="java.lang.Long">
+    SELECT COUNT(1) FROM sys_operate_log WHERE log_id = #{logId}
+
+</select>

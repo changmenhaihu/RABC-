@@ -1,0 +1,24 @@
+# ============================================================
+# 数据源 + MyBatis-Plus 配置
+# 敏感项（url / username / password）通过 ${...} 从 secret.yml 读取
+# 冒号后面的值是默认值，secret.yml 里没配时使用
+# ============================================================
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: "${db.url:jdbc:mysql://localhost:3306/rabc?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}"
+    username: ${db.username:root}
+    password: ${db.password:}
+
+mybatis-plus:
+  configuration:
+    # 下划线转驼峰
+    map-underscore-to-camel-case: true
+    # SQL 日志打印到控制台（生产建议换成 NoLoggingImpl 或 slf4j）
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      # 全局逻辑删除字段，实体用 @TableLogic 标记 deleted 时生效
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0

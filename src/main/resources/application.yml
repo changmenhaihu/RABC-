@@ -1,0 +1,24 @@
+# ============================================================
+# 应用主配置：只放与业务无关的公共项，并聚合其他配置
+# ============================================================
+spring:
+  application:
+    name: RBAC
+  # 聚合其他配置文件（Spring Boot 2.4+ 支持）
+  # secret.yml 放在最后，优先级最高，可覆盖前面文件里的同名项
+  config:
+    import:
+      - classpath:application-datasource.yml
+      - classpath:application-middleware.yml
+      - optional:classpath:secret.yml
+
+# 服务端口
+server:
+  port: 8080
+
+# 自定义线程池（给 @Async 降级使用）
+async:
+  pool:
+    core-size: 5
+    max-size: 10
+    queue-capacity: 200

@@ -1,0 +1,24 @@
+# ============================================================
+# 中间件配置：Redis + RocketMQ
+# 敏感项（Redis 密码）从 secret.yml 读取
+# ============================================================
+spring:
+  data:
+    redis:
+      host: ${redis.host:127.0.0.1}
+      port: ${redis.port:6379}
+      database: ${redis.database:0}
+      # 无密码留空，有密码在 secret.yml 里配 redis.password
+      password: ${redis.password:}
+
+rocketmq:
+  name-server: ${rocketmq.name-server:127.0.0.1:9876}
+  topic: sys_operate_log_topic
+  consumer-group: sys_operate_log_consumer_group
+  producer:
+    # 生产者组，不写会用默认值，建议显式指定
+    group: sys_operate_log_producer_group
+    # 异步发送失败重试次数
+    retry-times-when-send-async-failed: 2
+    # 发送超时
+    send-message-timeout: 3000
