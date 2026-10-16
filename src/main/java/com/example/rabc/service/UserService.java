@@ -1,6 +1,8 @@
 package com.example.rabc.service;
 
 
+import com.example.rabc.dto.ChangePasswordDTO;
+import com.example.rabc.dto.RegisterDTO;
 import com.example.rabc.dto.UpdateUserDTO;
 import com.example.rabc.entity.User;
 import com.example.rabc.vo.UserVO;
@@ -35,5 +37,8 @@ public interface UserService {
     List<Long> getRoleIdsByUserId(Long userId);
     //根据用户ID获取用户名
     String getUserNameById(Long userId);
-
+    //注册
+    void register(RegisterDTO dto);
+    //修改密码
+    void changePassword(Long userId, ChangePasswordDTO dto);
 }

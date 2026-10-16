@@ -23,7 +23,10 @@ public class AuthFilter implements Filter{
 
    public static final String REQUEST_ATTR_PERM_LIST = "permList";
    public static final String REQUEST_ATTR_USER_ID = "userId";
-    public static final String REQUEST_ATTR_USER_NAME = "username";
+   public static final String REQUEST_ATTR_USER_NAME = "username";
+
+    private static final List<String> WHITE_LIST =
+            List.of("/login", "/register");
 
     @Override
     public void doFilter(ServletRequest request,ServletResponse response,
@@ -43,7 +46,7 @@ public class AuthFilter implements Filter{
        resp.setContentType("application/json;charset=utf-8");
        //拿到请求地址 如果是login 那么直接放行
        String uri = req.getRequestURI();
-       if("/login".equals(uri)){
+       if(WHITE_LIST.contains(uri)){
            chain.doFilter(request,response);
            return;
        }

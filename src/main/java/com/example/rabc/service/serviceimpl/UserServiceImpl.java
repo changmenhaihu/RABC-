@@ -1,7 +1,10 @@
 package com.example.rabc.service.serviceimpl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.example.rabc.common.BusinessException;
+import com.example.rabc.dto.ChangePasswordDTO;
+import com.example.rabc.dto.RegisterDTO;
 import com.example.rabc.dto.TokenData;
 import com.example.rabc.dto.UpdateUserDTO;
 import com.example.rabc.entity.User;
@@ -15,12 +18,11 @@ import com.example.rabc.vo.UserVO;
 import jakarta.annotation.Resource;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -45,6 +47,10 @@ public class UserServiceImpl implements UserService {
     private  static  final String TOKEN_PREFIX = "token:";
     //token 过期时间 2小时
     private  static  final  long TOKEN_EXPIRE_SECONDS = 2*60*60;
+    //注册默认普通用户角色
+    private static final Long DEFAULT_ROLE_ID = 2L;
+    @Resource
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public String login (String username , String password){
@@ -55,7 +61,12 @@ public class UserServiceImpl implements UserService {
         if(user == null ){
             throw new BusinessException("账号或者密码错误");
         }
-
+        if (username == null || password == null) {
+            throw new BusinessException("用户名或密码不能为空");
+        }
+        if (user.getStatus() == 0) {
+            throw new BusinessException("账号已被禁用");
+        }
         boolean passwordOk = BCrypt.checkpw(password,user.getPassword());
         if(!passwordOk){
             throw new BusinessException("账号或者密码错误");
@@ -211,5 +222,62 @@ public  Long getUserIdByToken(String token){
             throw new BusinessException("用户不存在");
         }
         return user.getUsername();
+    }
+    @Override
+    @Transactional
+    public void register(RegisterDTO dto){
+        if (!dto.getPassword().equals(dto.getConfirmPassword())){
+            throw new BusinessException("两次密码不一致");
+        }
+        Long count  =userMapper.selectCount(
+                new LambdaQueryWrapper<User>().eq(User::getUsername,dto.getUsername())
+        );
+        if (count>0){
+            throw new BusinessException("用户名已存在");
+        }
+        User user = new User();
+        user.setUsername(dto.getUsername());
+        //BCrypt加密
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setNickname(dto.getNickname());
+        user.setEmail(dto.getEmail());
+        user.setStatus(1);
+        userMapper.insert(user);
+
+        //分配默认角色
+        UserRole ur = new UserRole();
+        ur.setUserId(user.getId());
+        ur.setRoleId(DEFAULT_ROLE_ID);
+        userRoleMapper.insert(ur);
+    }
+    @Override
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordDTO dto){
+        if (!dto.getNewPassword().equals(dto.getConfirmPassword())){
+            throw new BusinessException("两次新密码不一致");
+        }
+        if (dto.getOldPassword().equals(dto.getNewPassword())){
+            throw new BusinessException("新密码不能与旧密码相同");
+        }
+        User user = userMapper.selectById(userId);
+        if (user == null) throw new BusinessException("用户不存在");
+        if (!passwordEncoder.matches(dto.getOldPassword(),user.getPassword())){
+            throw new BusinessException("原密码错误");
+        }
+        String encode = passwordEncoder.encode(dto.getNewPassword());
+        userMapper.update(null,
+                new LambdaUpdateWrapper<User>()
+                        .eq(User::getId, userId)
+                        .set(User::getPassword, passwordEncoder.encode(dto.getNewPassword()))
+        );
+
+        //强制下线  删除该用户所有token
+        Set<String> keys = redisTemplate.keys(TOKEN_PREFIX+"*");
+        for (String key : keys) {
+            String v = Objects.requireNonNull(redisTemplate.opsForValue().get(key)).toString();
+            if (String.valueOf(userId).equals(v)) {
+                redisTemplate.delete(key);
+            }
+        }
     }
 }

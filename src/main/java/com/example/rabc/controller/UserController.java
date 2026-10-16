@@ -4,6 +4,8 @@ import com.example.rabc.annotation.OperateLog;
 import com.example.rabc.annotation.RequirePerm;
 import com.example.rabc.common.BusinessException;
 import com.example.rabc.common.Result;
+import com.example.rabc.dto.ChangePasswordDTO;
+import com.example.rabc.dto.RegisterDTO;
 import com.example.rabc.dto.UpdateUserDTO;
 import com.example.rabc.entity.User;
 import com.example.rabc.enums.OperateMoudleEnum;
@@ -78,6 +80,21 @@ public Result<UserVO> me(@RequestHeader("Authorization") String authorization,
     @GetMapping("/user/{id}/roles")
     public Result<List<Long>> getUserRoles(@PathVariable Long id){
     return  Result.success(userService.getRoleIdsByUserId(id));
+    }
+
+    @PostMapping("/register")
+    public Result<?> register(@RequestBody @Valid RegisterDTO dto){
+    userService.register(dto);
+    return Result.success("注册成功");
+    }
+
+    //从 request 拿 userId，由 AuthFilter 已放入
+    @PostMapping("/user/changePassword")
+    public Result<?> changePassword(HttpServletRequest request,
+                                    @RequestBody @Valid ChangePasswordDTO dto) {
+        Long userId = (Long) request.getAttribute(AuthFilter.REQUEST_ATTR_USER_ID);
+        userService.changePassword(userId, dto);
+        return Result.success("修改成功，请重新登录");
     }
 }
 
