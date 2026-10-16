@@ -11,8 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class RabcApplication {
 
     public static void main(String[] args) {
-        String hashPw = BCrypt.hashpw("123456",BCrypt.gensalt(10));
-        System.out.println("加密后的密码："+hashPw);
+
         SpringApplication.run(RabcApplication.class, args);
     }
 }

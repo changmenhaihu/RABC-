@@ -6,6 +6,7 @@ import com.example.rabc.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -19,9 +20,9 @@ public class PermissionInterceptor implements HandlerInterceptor {
     private UserService userService;
 
     @Override
-    public boolean preHandle(HttpServletRequest request,
-                             HttpServletResponse response,
-                             Object handler) throws Exception{
+    public boolean preHandle(@NotNull HttpServletRequest request,
+                             @NotNull HttpServletResponse response,
+                             @NotNull Object handler) throws Exception{
         //1.如果不是映射到方法上 直接放行（访问静态资源
         if(!(handler instanceof HandlerMethod handlerMethod)){
             return  true;
