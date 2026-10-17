@@ -3,6 +3,7 @@ package com.example.rabc.service;
 
 import com.example.rabc.dto.ChangePasswordDTO;
 import com.example.rabc.dto.RegisterDTO;
+import com.example.rabc.dto.TokenData;
 import com.example.rabc.dto.UpdateUserDTO;
 import com.example.rabc.entity.User;
 import com.example.rabc.vo.UserVO;
@@ -14,7 +15,6 @@ public interface UserService {
     String login (String username,String password);
 
     //校验token是否有效
-     boolean checkToken(String token) ;
 
     //根据用户id查询用户
     UserVO getUserById(Long userId);
@@ -22,11 +22,11 @@ public interface UserService {
     //退出登录 删除Redis中的token
     void logout(String token);
     //根据Token查询用户的id
-    Long getUserIdByToken (String token);
+
     //新增用户
     void addUser(User user);
     // 根据token查询权限列表
-    List<String> getPermListByToken(String token);
+
     //查询所有的用户
     List<UserVO> listAll();
     //修改用户信息
@@ -36,9 +36,13 @@ public interface UserService {
     //根据用户id获取拥有的角色
     List<Long> getRoleIdsByUserId(Long userId);
     //根据用户ID获取用户名
-    String getUserNameById(Long userId);
+
     //注册
     void register(RegisterDTO dto);
     //修改密码
     void changePassword(Long userId, ChangePasswordDTO dto);
+
+    /** 一次性取出 token 对应全部信息，null 表示无效 */
+    TokenData getTokenData(String token);
+
 }

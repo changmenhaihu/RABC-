@@ -1,5 +1,6 @@
 package com.example.rabc.filter;
 
+import com.example.rabc.dto.TokenData;
 import com.example.rabc.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.*;
@@ -10,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 //import java.util.concurrent.TimeUnit;
 
 @Component
@@ -20,9 +20,8 @@ public class AuthFilter implements Filter{
 
     @Resource
     private RedisTemplate<String,Object> redisTemplate;
-   private static  final  String TOKEN_PREFIX= "token:";
-  private static final long TOKEN_EXPIRE_SECONDS = 2*60*60;
-   public AuthFilter(UserService userService){
+
+    public AuthFilter(UserService userService){
        this.userService = userService;
    }
 
@@ -70,24 +69,20 @@ public class AuthFilter implements Filter{
        }else {
            token = authorization;
        }
-       boolean valid = userService.checkToken(token);
-       if(!valid){
-           resp.getWriter().write("{\"code\":401,\"msg\":\"token无效，请重新登录\",\"data\":null}");
-           return;
-       }
-     // token 续期 每次合法访问就刷新过期时间
-        String redisKey = TOKEN_PREFIX + token;
-        redisTemplate.expire(redisKey,TOKEN_EXPIRE_SECONDS, TimeUnit.SECONDS);
        //上面的校验通过请求继续往后走
        //对重复查询的优化 一次查询的权限列表  存入request域  拦截器直接读取
-       List<String> permList = userService.getPermListByToken(token);
        //Controller层也可以从这里取其他 信息 ，额外存入userId
-       Long userId = userService.getUserIdByToken(token);
-       String userName = userService.getUserNameById(userId);
+        TokenData tokenData = userService.getTokenData(token);
+        if (tokenData == null) {
+            resp.setStatus(401);                                    // ← 顺手补上，你原来漏了
+            resp.getWriter().write(
+                    "{\"code\":401,\"msg\":\"token无效，请重新登录\",\"data\":null}");
+            return;
+        }
 
-       req.setAttribute(REQUEST_ATTR_PERM_LIST,permList);
-       req.setAttribute(REQUEST_ATTR_USER_ID,userId);
-       req.setAttribute(REQUEST_ATTR_USER_NAME,userName);
+       req.setAttribute(REQUEST_ATTR_PERM_LIST,tokenData.getPermList());
+       req.setAttribute(REQUEST_ATTR_USER_ID,tokenData.getUserId());
+       req.setAttribute(REQUEST_ATTR_USER_NAME,tokenData.getUsername());
        chain.doFilter(request,response);
 
    }

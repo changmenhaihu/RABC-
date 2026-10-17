@@ -52,50 +52,47 @@ public class UserServiceImpl implements UserService {
     @Resource
     private PasswordEncoder passwordEncoder;
 
+    private static final String USER_TOKENS_PREFIX = "user:tokens:";   // ← 新增
+
     @Override
     public String login (String username , String password){
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(User::getUsername,username);
         User user = userMapper.selectOne(wrapper);
         //校验账号不存在或者密码不匹配
-        if(user == null ){
-            throw new BusinessException("账号或者密码错误");
-        }
-        if (username == null || password == null) {
+        if (username == null || username.isBlank()
+                || password == null || password.isBlank()) {
             throw new BusinessException("用户名或密码不能为空");
         }
-        if (user.getStatus() == 0) {
+        if (user == null) {
+            throw new BusinessException("账号或密码错误");
+        }
+        if (user.getStatus() != null && user.getStatus() == 0) {
             throw new BusinessException("账号已被禁用");
         }
-        boolean passwordOk = BCrypt.checkpw(password,user.getPassword());
-        if(!passwordOk){
-            throw new BusinessException("账号或者密码错误");
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new BusinessException("账号或密码错误");
         }
-   //一次SQL 直接查询权限标识
+      //一次SQL 直接查询权限标识
         List<String> permList = getPermKeysByUserId(user.getId());
-// 存进 TokenData
-        TokenData tokenData = new TokenData();
-        tokenData.setPermList(permList);
+       // 存进 TokenData
+        //封装dto存入redis
+        TokenData tokenData = new TokenData(user.getId(), user.getUsername(), permList);
+
         String token = UUID.randomUUID().toString().replace("-","");
-      //封装dto存入redis
-        tokenData.setUserId(user.getId());
-        tokenData.setUsername(user.getUsername());
 
         String redisKey  =  TOKEN_PREFIX + token;
-        //存入整个dto对象
+        //存入整个dto对象  正向索引
         redisTemplate.opsForValue().set(redisKey,tokenData,TOKEN_EXPIRE_SECONDS,TimeUnit.SECONDS);
+        // ② 反向：userId → Set<token>
+        String userTokensKey = USER_TOKENS_PREFIX + user.getId();
+        redisTemplate.opsForSet().add(userTokensKey, token);
+        // 每次登录都刷新 Set 的过期时间
+        redisTemplate.expire(userTokensKey, TOKEN_EXPIRE_SECONDS, TimeUnit.SECONDS);
+
         return token;
 }
-@Override
-public  Long getUserIdByToken(String token){
-    String redisKey = TOKEN_PREFIX + token;
-    //读取DTO对象
-    TokenData tokenData = (TokenData) redisTemplate.opsForValue().get(redisKey);
-    if(tokenData == null){
-        return  null;
-    }
-    return tokenData.getUserId();
-    }
+
 
     @Override
     public void addUser(User user) {
@@ -104,17 +101,7 @@ public  Long getUserIdByToken(String token){
     userMapper.insert(user);
     }
 
-    @Override
-    public  boolean checkToken(String token){
-        String redisKey = TOKEN_PREFIX + token;
-       Boolean hasKey =  redisTemplate.hasKey(redisKey);
-       if (!hasKey){
-           return false;
-       }
-       //每次校验通过都重新设置为2小时  滑动过期 只要使用就一直重置
-        redisTemplate.expire(redisKey,TOKEN_EXPIRE_SECONDS,TimeUnit.SECONDS);
-       return true;
-    }
+
 
     @Override
     public UserVO getUserById(Long userId) {
@@ -131,18 +118,21 @@ public  Long getUserIdByToken(String token){
 
     @Override
     public  void  logout (String token){
-        String redisKey = TOKEN_PREFIX + token;
-        redisTemplate.delete(redisKey);
+        if (token == null || token.isBlank()) return;
+
+        String tokenKey = TOKEN_PREFIX + token;
+
+        // 先从正向里取出 userId，才能定位反向 Set
+        Object value = redisTemplate.opsForValue().get(tokenKey);
+        if (value instanceof TokenData td) {
+            redisTemplate.opsForSet().remove(
+                    USER_TOKENS_PREFIX + td.getUserId(), token);
+        }
+
+        // 删正向
+        redisTemplate.delete(tokenKey);
     }
-    @Override
-    public List<String>  getPermListByToken(String token){
-     String redisKey = TOKEN_PREFIX+ token;
-     TokenData tokenData = (TokenData) redisTemplate.opsForValue().get(redisKey);
-     if(tokenData == null || tokenData.getPermList() == null){
-         return Collections.emptyList();
-     }
-     return tokenData.getPermList();
-    }
+
 
     //  权限缓存到列表里的方法
     @SuppressWarnings("unchecked")
@@ -200,6 +190,7 @@ public  Long getUserIdByToken(String token){
         userMapper.deleteById(userId);
         //清理Redis缓存
         redisTemplate.delete("perm:user:"+userId);
+        kickOutAllTokens(userId);
         return true;
     }
     @Override
@@ -208,21 +199,10 @@ public  Long getUserIdByToken(String token){
             throw new BusinessException("userId不能为空");
         }
         return userRoleMapper.selectList(
-                new LambdaQueryWrapper<UserRole>().eq(UserRole::getRoleId,userId)
-        ).stream().map(UserRole::getUserId).collect(Collectors.toList());
+                new LambdaQueryWrapper<UserRole>().eq(UserRole::getUserId,userId)
+        ).stream().map(UserRole::getRoleId).collect(Collectors.toList());
     }
 
-    @Override
-    public String getUserNameById(Long userId){
-        if (userId == null){
-            throw new BusinessException("userId不能为空");
-        }
-        User user =  userMapper.selectById(userId);
-        if (user == null){
-            throw new BusinessException("用户不存在");
-        }
-        return user.getUsername();
-    }
     @Override
     @Transactional
     public void register(RegisterDTO dto){
@@ -251,7 +231,7 @@ public  Long getUserIdByToken(String token){
         userRoleMapper.insert(ur);
     }
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void changePassword(Long userId, ChangePasswordDTO dto){
         if (!dto.getNewPassword().equals(dto.getConfirmPassword())){
             throw new BusinessException("两次新密码不一致");
@@ -268,16 +248,40 @@ public  Long getUserIdByToken(String token){
         userMapper.update(null,
                 new LambdaUpdateWrapper<User>()
                         .eq(User::getId, userId)
-                        .set(User::getPassword, passwordEncoder.encode(dto.getNewPassword()))
+                        .set(User::getPassword, encode)
         );
 
         //强制下线  删除该用户所有token
-        Set<String> keys = redisTemplate.keys(TOKEN_PREFIX+"*");
-        for (String key : keys) {
-            String v = Objects.requireNonNull(redisTemplate.opsForValue().get(key)).toString();
-            if (String.valueOf(userId).equals(v)) {
-                redisTemplate.delete(key);
+        kickOutAllTokens(userId);
+    }
+    @Override
+    public TokenData getTokenData(String token) {
+        if (token == null || token.isBlank()) return null;
+        String redisKey = TOKEN_PREFIX + token;
+        Object value = redisTemplate.opsForValue().get(redisKey);
+        if (value == null) return null;
+
+        // 顺带续期（滑动过期）
+        redisTemplate.expire(redisKey, TOKEN_EXPIRE_SECONDS, TimeUnit.SECONDS);
+        return (TokenData) value;
+    }
+    /**
+     * 强制下线：删除该用户所有有效 token
+     */
+    private void kickOutAllTokens(Long userId) {
+        if (userId == null) return;
+
+        String userTokensKey = USER_TOKENS_PREFIX + userId;
+        Set<Object> tokens = redisTemplate.opsForSet().members(userTokensKey);
+
+        if (tokens != null) {
+            for (Object t : tokens) {
+                redisTemplate.delete(TOKEN_PREFIX + t);
             }
         }
+
+        // 反向 Set 本身也删掉
+        redisTemplate.delete(userTokensKey);
     }
+
 }
